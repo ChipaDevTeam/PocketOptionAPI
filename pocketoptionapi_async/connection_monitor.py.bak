@@ -13,7 +13,7 @@ from collections import deque, defaultdict
 import statistics
 from loguru import logger
 
-from pocketoptionapi_async.client import AsyncPocketOptionClient
+from client import AsyncPocketOptionClient
 
 
 @dataclass

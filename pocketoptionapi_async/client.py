@@ -1301,7 +1301,7 @@ class AsyncPocketOptionClient:
                 logger.error(f"Error parsing stream candles: {e}")
         return candles
 
-    async def _on_keep_alive_connected(self):
+    async def _on_keep_alive_connected(self, data: Dict[str, Any] = None):
         """Handle event when keep-alive connection is established"""
         logger.info("Keep-alive connection established")
 
@@ -1318,7 +1318,7 @@ class AsyncPocketOptionClient:
             except Exception as e:
                 logger.error(f"Error in connected callback: {e}")
 
-    async def _on_keep_alive_reconnected(self):
+    async def _on_keep_alive_reconnected(self, data: Dict[str, Any] = None):
         """Handle event when keep-alive connection is re-established"""
         logger.info("Keep-alive connection re-established")
 
@@ -1335,8 +1335,10 @@ class AsyncPocketOptionClient:
             except Exception as e:
                 logger.error(f"Error in reconnected callback: {e}")
 
-    async def _on_keep_alive_message(self, message):
+    async def _on_keep_alive_message(self, data: Dict[str, Any] = None):
         """Handle messages received via keep-alive connection"""
+        # Extract message from data dictionary
+        message = data.get("message", "") if isinstance(data, dict) else str(data) if data else ""
         # Process the message
         if message.startswith("42"):
             try:

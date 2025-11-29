@@ -91,7 +91,7 @@ async def test_check_win_id_mapping():
     check_result = await client.check_win(client_request_id, max_wait_time=1.0)
     
     assert check_result is not None, "check_win should return a result"
-    assert check_result["completed"] == True, "Order should be completed"
+    assert check_result["completed"], "Order should be completed"
     assert check_result["result"] == "win", f"Result should be 'win', got {check_result['result']}"
     assert check_result["profit"] == 8.5, f"Profit should be 8.5, got {check_result['profit']}"
     print(f"   ✅ PASS: check_win returned correct result: {check_result}")

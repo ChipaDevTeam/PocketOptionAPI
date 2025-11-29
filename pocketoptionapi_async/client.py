@@ -1036,12 +1036,13 @@ class AsyncPocketOptionClient:
         if "requestId" in data and "asset" in data and "amount" in data:
             request_id = str(data["requestId"])
 
-            # Store mapping from server ID to request ID if server ID is present
-            if "id" in data:
+            # Store mapping from server ID to request ID if server ID is present and valid
+            if "id" in data and data["id"]:
                 server_id = str(data["id"])
-                self._server_id_to_request_id[server_id] = request_id
-                if self.enable_logging:
-                    logger.debug(f"Mapped server ID {server_id} to request ID {request_id}")
+                if server_id:  # Ensure string is not empty
+                    self._server_id_to_request_id[server_id] = request_id
+                    if self.enable_logging:
+                        logger.debug(f"Mapped server ID {server_id} to request ID {request_id}")
 
             # If this is a new order, add it to tracking
             if (
@@ -1084,7 +1085,7 @@ class AsyncPocketOptionClient:
                     
                     # If we have a mapping, use request_id to find the order
                     # Otherwise, fall back to trying server_deal_id directly
-                    lookup_id = request_id if request_id else server_deal_id
+                    lookup_id = request_id or server_deal_id
                     
                     if lookup_id in self._active_orders:
                         active_order = self._active_orders[lookup_id]

@@ -973,21 +973,13 @@ class AsyncPocketOptionClient:
             if isinstance(candles_data, list):
                 for candle_data in candles_data:
                     if isinstance(candle_data, (list, tuple)) and len(candle_data) >= 5:
-                        # Server format: [timestamp, open, low, high, close]
-                        # Note: Server sends low/high swapped compared to standard OHLC format
-                        raw_high = float(candle_data[2])
-                        raw_low = float(candle_data[3])
-
-                        # Ensure high >= low by swapping if necessary
-                        actual_high = max(raw_high, raw_low)
-                        actual_low = min(raw_high, raw_low)
-
+                        # Server format: [timestamp, open, close, high, low]
                         candle = Candle(
                             timestamp=datetime.fromtimestamp(candle_data[0]),
                             open=float(candle_data[1]),
-                            high=actual_high,
-                            low=actual_low,
-                            close=float(candle_data[4]),
+                            high=float(candle_data[3]),
+                            low=float(candle_data[4]),
+                            close=float(candle_data[2]),
                             volume=float(candle_data[5])
                             if len(candle_data) > 5
                             else 0.0,
@@ -1263,7 +1255,7 @@ class AsyncPocketOptionClient:
                             timeframe=timeframe,
                         )
                         candles.append(candle)
-                    elif isinstance(item, (list, tuple)) and len(item) >= 6:
+                    elif isinstance(item, (list, tuple)) and len(item) >= 5:
                         candle = Candle(
                             timestamp=datetime.fromtimestamp(item[0]),
                             open=float(item[1]),

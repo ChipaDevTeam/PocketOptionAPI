@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Supported Assets & Timeframes - PocketOptionAPI Async Docs</title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  <style>
+    .asset-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin: 1rem 0;
+    }
+    .asset-item {
+      background: #f8f9fa;
+      padding: 0.5rem;
+      border-radius: 6px;
+      border-left: 3px solid #007bff;
+      font-family: 'Courier New', monospace;
+      font-size: 0.9rem;
+    }
+    .timeframe-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1rem;
+      margin: 1rem 0;
+    }
+    .timeframe-item {
+      background: #f8f9fa;
+      padding: 1rem;
+      border-radius: 6px;
+      border-left: 3px solid #28a745;
+    }
+    .timeframe-value {
+      font-family: 'Courier New', monospace;
+      font-weight: bold;
+      color: #007bff;
+    }
+    .category-section {
+      margin: 2rem 0;
+    }
+    .category-title {
+      color: #007bff;
+      border-bottom: 2px solid #007bff;
+      padding-bottom: 0.5rem;
+      margin-bottom: 1rem;
+    }
+    .asset-count {
+      color: #6c757d;
+      font-size: 0.9rem;
+      margin-left: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>PocketOptionAPI Async</h1>
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="quickstart.html">Quickstart</a>
+      <a href="api.html">API Reference</a>
+      <a href="examples.html">Examples</a>
+      <a href="assets-timeframes.html" class="active">Assets & Timeframes</a>
+      <a href="faq.html">FAQ</a>
+    </nav>
+  </header>
+  <main>
+    <h2>Supported Assets & Timeframes</h2>
+    <div class="card">
+      <p>This page provides comprehensive documentation of all assets and timeframes supported by the PocketOption API. Use these exact symbols when making API calls.</p>
+    </div>
+
+    <!-- Timeframes Section -->
+    <div class="category-section">
+      <h3 class="category-title">Supported Timeframes <span class="asset-count">(14 timeframes)</span></h3>
+      <div class="card">
+        <p>The API supports the following timeframes for candlestick data. Use either the TimeFrame enum values or the seconds value:</p>
+        
+        <div class="timeframe-grid">
+          <div class="timeframe-item">
+            <h4>1 Second</h4>
+            <p><span class="timeframe-value">TimeFrame.S1</span> or <span class="timeframe-value">1</span> seconds</p>
+            <p>Ultra high-frequency data for scalping strategies</p>
+          </div>
+          <div class="timeframe-item">
+            <h4>5 Seconds</h4>
+            <p><span class="timeframe-value">TimeFrame.S5</span> or <span class="timeframe-value">5</span> seconds</p>
+            <p>Very short-term price movements</p>
+          </div>
+          <div class="timeframe-item">
+            <h4>10 Seconds</h4>
+            <p><span class="timeframe-value">TimeFrame.S10</span> or <span class="timeframe-value">10</span> seconds</p>
+            <p>Short-term trading intervals</p>
+          </div>
+          <div class="timeframe-item">
+            <h4>15 Seconds</h4>
+            <p><span class="timeframe-value">TimeFrame.S15</span> or <span class="timeframe-value">15</span> seconds</p>
+            <p>Quick momentum analysis</p>
+          </div>
+          <div class="timeframe-item">
+            <h4>30 Seconds</h4>
+            <p><span class="timeframe-value">TimeFrame.S30</span> or <span class="timeframe-value">30</span> seconds</p>
+            <p>Standard binary options timeframe</p>
+          </div>
+          <div class="timeframe-item">
+            <h4>1 Minute</h4>
+            <p><span class="timeframe-value">TimeFrame.M1</span> or <span class="timeframe-value">60</span> seconds</p>
+            <p>Most common short-term timeframe</p>
+          </div>
+          <div class="timeframe-item">
+            <h4>5 Minutes</h4>
+            <p><span class="timeframe-value">TimeFrame.M5</span> or <span class="timeframe-value">300</span> seconds</p>
+            <p>Popular for intraday analysis</p>
+          </div>
+          <div class="timeframe-item">
+            <h4>15 Minutes</h4>
+            <p><span class="timeframe-value">TimeFrame.M15</span> or <span class="timeframe-value">900</span> seconds</p>
+            <p>Good for trend identification</p>
+          </div>
+          <div class="timeframe-item">
+            <h4>30 Minutes</h4>
+            <p><span class="timeframe-value">TimeFrame.M30</span> or <span class="timeframe-value">1800</span> seconds</p>
+            <p>Medium-term price action</p>
+          </div>
+          <div class="timeframe-item">
+            <h4>1 Hour</h4>
+            <p><span class="timeframe-value">TimeFrame.H1</span> or <span class="timeframe-value">3600</span> seconds</p>
+            <p>Standard hourly charts</p>
+          </div>
+          <div class="timeframe-item">
+            <h4>4 Hours</h4>
+            <p><span class="timeframe-value">TimeFrame.H4</span> or <span class="timeframe-value">14400</span> seconds</p>
+            <p>Swing trading timeframe</p>
+          </div>
+          <div class="timeframe-item">
+            <h4>1 Day</h4>
+            <p><span class="timeframe-value">TimeFrame.D1</span> or <span class="timeframe-value">86400</span> seconds</p>
+            <p>Daily price movements</p>
+          </div>
+          <div class="timeframe-item">
+            <h4>1 Week</h4>
+            <p><span class="timeframe-value">TimeFrame.W1</span> or <span class="timeframe-value">604800</span> seconds</p>
+            <p>Weekly trend analysis</p>
+          </div>
+          <div class="timeframe-item">
+            <h4>1 Month</h4>
+            <p><span class="timeframe-value">TimeFrame.MN1</span> or <span class="timeframe-value">2592000</span> seconds</p>
+            <p>Long-term monthly charts (approximate)</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Assets Section -->
+    <div class="category-section">
+      <h3 class="category-title">Major Forex Pairs <span class="asset-count">(7 assets)</span></h3>
+      <div class="card">
+        <p>The most liquid and widely traded currency pairs in the forex market:</p>
+        <div class="asset-grid">
+          <div class="asset-item">EURUSD</div>
+          <div class="asset-item">GBPUSD</div>
+          <div class="asset-item">USDJPY</div>
+          <div class="asset-item">USDCHF</div>
+          <div class="asset-item">USDCAD</div>
+          <div class="asset-item">AUDUSD</div>
+          <div class="asset-item">NZDUSD</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="category-section">
+      <h3 class="category-title">OTC Forex Pairs <span class="asset-count">(25 assets)</span></h3>
+      <div class="card">
+        <p>Over-the-counter forex pairs available for extended trading hours:</p>
+        <div class="asset-grid">
+          <div class="asset-item">EURUSD_otc</div>
+          <div class="asset-item">GBPUSD_otc</div>
+          <div class="asset-item">USDJPY_otc</div>
+          <div class="asset-item">USDCHF_otc</div>
+          <div class="asset-item">USDCAD_otc</div>
+          <div class="asset-item">AUDUSD_otc</div>
+          <div class="asset-item">AUDNZD_otc</div>
+          <div class="asset-item">AUDCAD_otc</div>
+          <div class="asset-item">AUDCHF_otc</div>
+          <div class="asset-item">AUDJPY_otc</div>
+          <div class="asset-item">CADCHF_otc</div>
+          <div class="asset-item">CADJPY_otc</div>
+          <div class="asset-item">CHFJPY_otc</div>
+          <div class="asset-item">EURCHF_otc</div>
+          <div class="asset-item">EURGBP_otc</div>
+          <div class="asset-item">EURJPY_otc</div>
+          <div class="asset-item">EURNZD_otc</div>
+          <div class="asset-item">GBPAUD_otc</div>
+          <div class="asset-item">GBPJPY_otc</div>
+          <div class="asset-item">NZDJPY_otc</div>
+          <div class="asset-item">NZDUSD_otc</div>
+          <div class="asset-item">EURRUB_otc</div>
+          <div class="asset-item">USDRUB_otc</div>
+          <div class="asset-item">EURHUF_otc</div>
+          <div class="asset-item">CHFNOK_otc</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="category-section">
+      <h3 class="category-title">Commodities <span class="asset-count">(14 assets)</span></h3>
+      <div class="card">
+        <p>Precious metals, energy, and agricultural commodities:</p>
+        <div class="asset-grid">
+          <div class="asset-item">XAUUSD <em>(Gold)</em></div>
+          <div class="asset-item">XAUUSD_otc <em>(Gold OTC)</em></div>
+          <div class="asset-item">XAGUSD <em>(Silver)</em></div>
+          <div class="asset-item">XAGUSD_otc <em>(Silver OTC)</em></div>
+          <div class="asset-item">UKBrent <em>(Brent Oil)</em></div>
+          <div class="asset-item">UKBrent_otc <em>(Brent Oil OTC)</em></div>
+          <div class="asset-item">USCrude <em>(WTI Oil)</em></div>
+          <div class="asset-item">USCrude_otc <em>(WTI Oil OTC)</em></div>
+          <div class="asset-item">XNGUSD <em>(Natural Gas)</em></div>
+          <div class="asset-item">XNGUSD_otc <em>(Natural Gas OTC)</em></div>
+          <div class="asset-item">XPTUSD <em>(Platinum)</em></div>
+          <div class="asset-item">XPTUSD_otc <em>(Platinum OTC)</em></div>
+          <div class="asset-item">XPDUSD <em>(Palladium)</em></div>
+          <div class="asset-item">XPDUSD_otc <em>(Palladium OTC)</em></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="category-section">
+      <h3 class="category-title">Cryptocurrencies <span class="asset-count">(10 assets)</span></h3>
+      <div class="card">
+        <p>Major digital currencies and altcoins:</p>
+        <div class="asset-grid">
+          <div class="asset-item">BTCUSD <em>(Bitcoin/USD)</em></div>
+          <div class="asset-item">ETHUSD <em>(Ethereum/USD)</em></div>
+          <div class="asset-item">DASH_USD <em>(Dash/USD)</em></div>
+          <div class="asset-item">BTCGBP <em>(Bitcoin/GBP)</em></div>
+          <div class="asset-item">BTCJPY <em>(Bitcoin/JPY)</em></div>
+          <div class="asset-item">BCHEUR <em>(Bitcoin Cash/EUR)</em></div>
+          <div class="asset-item">BCHGBP <em>(Bitcoin Cash/GBP)</em></div>
+          <div class="asset-item">BCHJPY <em>(Bitcoin Cash/JPY)</em></div>
+          <div class="asset-item">DOTUSD <em>(Polkadot/USD)</em></div>
+          <div class="asset-item">LNKUSD <em>(Chainlink/USD)</em></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="category-section">
+      <h3 class="category-title">Stock Indices <span class="asset-count">(24 assets)</span></h3>
+      <div class="card">
+        <p>Major global stock market indices:</p>
+        <div class="asset-grid">
+          <div class="asset-item">SP500 <em>(S&P 500)</em></div>
+          <div class="asset-item">SP500_otc <em>(S&P 500 OTC)</em></div>
+          <div class="asset-item">NASUSD <em>(NASDAQ)</em></div>
+          <div class="asset-item">NASUSD_otc <em>(NASDAQ OTC)</em></div>
+          <div class="asset-item">DJI30 <em>(Dow Jones)</em></div>
+          <div class="asset-item">DJI30_otc <em>(Dow Jones OTC)</em></div>
+          <div class="asset-item">JPN225 <em>(Nikkei 225)</em></div>
+          <div class="asset-item">JPN225_otc <em>(Nikkei 225 OTC)</em></div>
+          <div class="asset-item">D30EUR <em>(DAX 30)</em></div>
+          <div class="asset-item">D30EUR_otc <em>(DAX 30 OTC)</em></div>
+          <div class="asset-item">E50EUR <em>(Euro Stoxx 50)</em></div>
+          <div class="asset-item">E50EUR_otc <em>(Euro Stoxx 50 OTC)</em></div>
+          <div class="asset-item">F40EUR <em>(CAC 40)</em></div>
+          <div class="asset-item">F40EUR_otc <em>(CAC 40 OTC)</em></div>
+          <div class="asset-item">E35EUR <em>(Euro Stoxx 35)</em></div>
+          <div class="asset-item">E35EUR_otc <em>(Euro Stoxx 35 OTC)</em></div>
+          <div class="asset-item">100GBP <em>(FTSE 100)</em></div>
+          <div class="asset-item">100GBP_otc <em>(FTSE 100 OTC)</em></div>
+          <div class="asset-item">AUS200 <em>(ASX 200)</em></div>
+          <div class="asset-item">AUS200_otc <em>(ASX 200 OTC)</em></div>
+          <div class="asset-item">CAC40 <em>(CAC 40)</em></div>
+          <div class="asset-item">AEX25 <em>(AEX 25)</em></div>
+          <div class="asset-item">SMI20 <em>(SMI 20)</em></div>
+          <div class="asset-item">H33HKD <em>(Hang Seng)</em></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="category-section">
+      <h3 class="category-title">US Stocks <span class="asset-count">(36 assets)</span></h3>
+      <div class="card">
+        <p>Major US publicly traded companies:</p>
+        <div class="asset-grid">
+          <div class="asset-item">#AAPL <em>(Apple)</em></div>
+          <div class="asset-item">#AAPL_otc <em>(Apple OTC)</em></div>
+          <div class="asset-item">#MSFT <em>(Microsoft)</em></div>
+          <div class="asset-item">#MSFT_otc <em>(Microsoft OTC)</em></div>
+          <div class="asset-item">#TSLA <em>(Tesla)</em></div>
+          <div class="asset-item">#TSLA_otc <em>(Tesla OTC)</em></div>
+          <div class="asset-item">#FB <em>(Meta/Facebook)</em></div>
+          <div class="asset-item">#FB_otc <em>(Meta/Facebook OTC)</em></div>
+          <div class="asset-item">#AMZN_otc <em>(Amazon OTC)</em></div>
+          <div class="asset-item">#NFLX <em>(Netflix)</em></div>
+          <div class="asset-item">#NFLX_otc <em>(Netflix OTC)</em></div>
+          <div class="asset-item">#INTC <em>(Intel)</em></div>
+          <div class="asset-item">#INTC_otc <em>(Intel OTC)</em></div>
+          <div class="asset-item">#BA <em>(Boeing)</em></div>
+          <div class="asset-item">#BA_otc <em>(Boeing OTC)</em></div>
+          <div class="asset-item">#JPM <em>(JPMorgan Chase)</em></div>
+          <div class="asset-item">#JNJ <em>(Johnson & Johnson)</em></div>
+          <div class="asset-item">#JNJ_otc <em>(Johnson & Johnson OTC)</em></div>
+          <div class="asset-item">#PFE <em>(Pfizer)</em></div>
+          <div class="asset-item">#PFE_otc <em>(Pfizer OTC)</em></div>
+          <div class="asset-item">#XOM <em>(ExxonMobil)</em></div>
+          <div class="asset-item">#XOM_otc <em>(ExxonMobil OTC)</em></div>
+          <div class="asset-item">#AXP <em>(American Express)</em></div>
+          <div class="asset-item">#AXP_otc <em>(American Express OTC)</em></div>
+          <div class="asset-item">#MCD <em>(McDonald's)</em></div>
+          <div class="asset-item">#MCD_otc <em>(McDonald's OTC)</em></div>
+          <div class="asset-item">#CSCO <em>(Cisco)</em></div>
+          <div class="asset-item">#CSCO_otc <em>(Cisco OTC)</em></div>
+          <div class="asset-item">#VISA_otc <em>(Visa OTC)</em></div>
+          <div class="asset-item">#CITI <em>(Citigroup)</em></div>
+          <div class="asset-item">#CITI_otc <em>(Citigroup OTC)</em></div>
+          <div class="asset-item">#FDX_otc <em>(FedEx OTC)</em></div>
+          <div class="asset-item">#TWITTER <em>(Twitter/X)</em></div>
+          <div class="asset-item">#TWITTER_otc <em>(Twitter/X OTC)</em></div>
+          <div class="asset-item">#BABA <em>(Alibaba)</em></div>
+          <div class="asset-item">#BABA_otc <em>(Alibaba OTC)</em></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="category-section">
+      <h3 class="category-title">Additional Assets <span class="asset-count">(5 assets)</span></h3>
+      <div class="card">
+        <p>Other available trading instruments:</p>
+        <div class="asset-grid">
+          <div class="asset-item">Microsoft_otc <em>(Microsoft Alternative)</em></div>
+          <div class="asset-item">Facebook_OTC <em>(Facebook Alternative)</em></div>
+          <div class="asset-item">Tesla_otc <em>(Tesla Alternative)</em></div>
+          <div class="asset-item">Boeing_OTC <em>(Boeing Alternative)</em></div>
+          <div class="asset-item">American_Express_otc <em>(American Express Alternative)</em></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Usage Examples -->
+    <div class="category-section">
+      <h3 class="category-title">Usage Examples</h3>
+      <div class="card">
+        <h4>Getting Candles Data</h4>
+        <pre><code>from pocketoptionapi_async import AsyncPocketOptionClient, TimeFrame
+
+# Using TimeFrame enum (recommended)
+candles = await client.get_candles("EURUSD", TimeFrame.M5, 50)
+
+# Using seconds value directly
+candles = await client.get_candles("BTCUSD", 300, 100)
+
+# Getting data for different asset types
+forex_candles = await client.get_candles("GBPUSD_otc", TimeFrame.H1, 24)
+crypto_candles = await client.get_candles("ETHUSD", TimeFrame.M15, 96)
+stock_candles = await client.get_candles("#AAPL", TimeFrame.D1, 30)</code></pre>
+
+        <h4>Placing Orders</h4>
+        <pre><code>from pocketoptionapi_async.models import OrderDirection
+
+# Place a CALL order on EUR/USD
+order = await client.place_order(
+    asset="EURUSD_otc",
+    amount=10.0,
+    direction=OrderDirection.CALL,
+    duration=60  # 1 minute
+)
+
+# Place a PUT order on Bitcoin
+order = await client.place_order(
+    asset="BTCUSD",
+    amount=25.0,
+    direction=OrderDirection.PUT,
+    duration=300  # 5 minutes
+)</code></pre>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>Important Notes</h4>
+      <ul>
+        <li><strong>OTC Assets:</strong> Over-the-counter assets (marked with "_otc") are available for extended trading hours</li>
+        <li><strong>Asset Availability:</strong> Asset availability may vary based on market hours and trading conditions</li>
+        <li><strong>Timeframe Limitations:</strong> Not all timeframes may be available for all assets</li>
+        <li><strong>Case Sensitivity:</strong> Asset symbols are case-sensitive - use exact spelling as shown</li>
+        <li><strong>Stock Symbols:</strong> US stocks are prefixed with "#" character</li>
+      </ul>
+    </div>
+  </main>
+</body>
+<script src="codeblock.js"></script>
+</html>

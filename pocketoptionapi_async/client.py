@@ -566,13 +566,13 @@ class AsyncPocketOptionClient:
         Returns:
             OrderResult: Order result or None if not found
         """
-        # First check active orders
-        if order_id in self._active_orders:
-            return self._active_orders[order_id]
-
-        # Then check completed orders
+        # First check completed orders (prioritize final results over active orders)
         if order_id in self._order_results:
             return self._order_results[order_id]
+
+        # Then check active orders
+        if order_id in self._active_orders:
+            return self._active_orders[order_id]
 
         # Not found
         return None

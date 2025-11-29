@@ -93,6 +93,7 @@ class AsyncPocketOptionClient:
         self._orders: Dict[str, OrderResult] = {}
         self._active_orders: Dict[str, OrderResult] = {}
         self._order_results: Dict[str, OrderResult] = {}
+        self._server_id_to_request_id: Dict[str, str] = {}  # Maps server deal IDs to client request IDs
         self._candles_cache: Dict[str, List[Candle]] = {}
         self._server_time: Optional[ServerTime] = None
         self._event_callbacks: Dict[str, List[Callable]] = defaultdict(list)
@@ -1035,6 +1036,14 @@ class AsyncPocketOptionClient:
         if "requestId" in data and "asset" in data and "amount" in data:
             request_id = str(data["requestId"])
 
+            # Store mapping from server ID to request ID if server ID is present and valid
+            if "id" in data and data["id"]:
+                server_id = str(data["id"])
+                if server_id:  # Ensure string is not empty
+                    self._server_id_to_request_id[server_id] = request_id
+                    if self.enable_logging:
+                        logger.debug(f"Mapped server ID {server_id} to request ID {request_id}")
+
             # If this is a new order, add it to tracking
             if (
                 request_id not in self._active_orders
@@ -1069,10 +1078,17 @@ class AsyncPocketOptionClient:
         elif "deals" in data and isinstance(data["deals"], list):
             for deal in data["deals"]:
                 if isinstance(deal, dict) and "id" in deal:
-                    order_id = str(deal["id"])
-
-                    if order_id in self._active_orders:
-                        active_order = self._active_orders[order_id]
+                    server_deal_id = str(deal["id"])
+                    
+                    # Try to find the request_id for this server deal ID
+                    request_id = self._server_id_to_request_id.get(server_deal_id)
+                    
+                    # If we have a mapping, use request_id to find the order
+                    # Otherwise, fall back to trying server_deal_id directly
+                    lookup_id = request_id or server_deal_id
+                    
+                    if lookup_id in self._active_orders:
+                        active_order = self._active_orders[lookup_id]
                         profit = float(deal.get("profit", 0))
 
                         # Determine status
@@ -1096,13 +1112,17 @@ class AsyncPocketOptionClient:
                             payout=deal.get("payout"),
                         )
 
-                        # Move from active to completed
-                        self._order_results[order_id] = result
-                        del self._active_orders[order_id]
+                        # Move from active to completed - use the original order_id (request_id)
+                        self._order_results[active_order.order_id] = result
+                        del self._active_orders[lookup_id]
+                        
+                        # Clean up the server ID mapping
+                        if request_id and server_deal_id in self._server_id_to_request_id:
+                            del self._server_id_to_request_id[server_deal_id]
 
                         if self.enable_logging:
                             logger.success(
-                                f" Order {order_id} completed via JSON data: {status.value} - Profit: ${profit:.2f}"
+                                f" Order {active_order.order_id} completed via JSON data: {status.value} - Profit: ${profit:.2f}"
                             )
                             await self._emit_event("order_closed", result)
 

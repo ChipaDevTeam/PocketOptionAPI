@@ -1256,6 +1256,7 @@ class AsyncPocketOptionClient:
                         )
                         candles.append(candle)
                     elif isinstance(item, (list, tuple)) and len(item) >= 5:
+                        # Server format: [timestamp, open, close, high, low]
                         candle = Candle(
                             timestamp=datetime.fromtimestamp(item[0]),
                             open=float(item[1]),

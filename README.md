@@ -1,5 +1,5 @@
 # PocketOption API- By ChipaDevTeam - Modified by Six <3
-
+[join comunity](https://chipatrade.com/community)
 ## Support us
 Join PocketOption with Six's affiliate link: [Six PocketOption Affiliate link](https://u3.shortink.io/main?utm_campaign=821725&utm_source=affiliate&utm_medium=sr&a=IqeAmBtFTrEWbh&ac=api&code=DLN960)
 <br>

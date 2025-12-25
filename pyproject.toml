@@ -3,7 +3,7 @@
 ###########################
 [project]
 name = "pocketoptionapi-async"
-version = "2.0.0"
+version = "2.0.1"
 description = "A comprehensive, modern async Python API for PocketOption trading platform."
 readme = "README.md"
 license = { file = "LICENSE" }

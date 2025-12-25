@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Termux Setup - PocketOptionAPI Async Docs</title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+</head>
+<body>
+  <header>
+    <h1>PocketOptionAPI Async</h1>
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="quickstart.html">Quickstart</a>
+      <a href="api.html">API Reference</a>
+      <a href="examples.html">Examples</a>
+      <a href="assets-timeframes.html">Assets & Timeframes</a>
+      <a href="termux-setup.html">Termux Setup</a>
+      <a href="faq.html">FAQ</a>
+    </nav>
+  </header>
+  <main>
+    <h2>Environment Setup Guide for Termux</h2>
+    <p>This guide will help you set up PocketOptionAPI on Termux, allowing you to run trading scripts directly from your Android device.</p>
+    
+    <div class="card">
+      <h3>1. Termux Installation</h3>
+      <p>First, you need to install Termux on your Android device:</p>
+      <ul>
+        <li>Download Termux from <a href="https://f-droid.org/en/packages/com.termux/" target="_blank">F-Droid</a> (recommended) or Google Play Store</li>
+        <li><b>Note:</b> F-Droid version is recommended as it receives more frequent updates</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>2. Update Termux Packages</h3>
+      <p>After installing Termux, open it and update the package repository:</p>
+      <pre><code>pkg update && pkg upgrade</code></pre>
+      <p>Press <code>Y</code> when prompted to confirm the updates.</p>
+    </div>
+
+    <div class="card">
+      <h3>3. Install Required Packages</h3>
+      <p>Install Python and Git, which are required to run PocketOptionAPI:</p>
+      <pre><code>pkg install python git</code></pre>
+    </div>
+
+    <div class="card">
+      <h3>4. Clone the Repository</h3>
+      <p>Clone the PocketOptionAPI repository to your Termux environment:</p>
+      <pre><code>git clone https://github.com/ChipaDevTeam/PocketOptionAPI.git
+cd PocketOptionAPI</code></pre>
+    </div>
+
+    <div class="card">
+      <h3>5. Install Python Dependencies</h3>
+      <p>Install all required Python packages using pip:</p>
+      <pre><code>pip install -r requirements.txt</code></pre>
+      <p><b>Note:</b> This may take several minutes depending on your internet connection.</p>
+    </div>
+
+    <div class="card">
+      <h3>6. Configuration</h3>
+      <p>Set up your API credentials:</p>
+      <ol>
+        <li>Copy the example environment file:
+          <pre><code>cp .env.example .env</code></pre>
+        </li>
+        <li>Edit the <code>.env</code> file with your SSID:
+          <pre><code>nano .env</code></pre>
+        </li>
+        <li>Add your SSID (see <a href="quickstart.html">Quickstart guide</a> for how to get your SSID):
+          <pre><code>SSID = '42["auth",{"session":"your_session_here","isDemo":1,"uid":12345,"platform":1}]'</code></pre>
+        </li>
+        <li>Save and exit (Press <code>Ctrl+X</code>, then <code>Y</code>, then <code>Enter</code>)</li>
+      </ol>
+    </div>
+
+    <div class="card">
+      <h3>7. Run Your First Script</h3>
+      <p>Test your setup by running one of the example scripts:</p>
+      <pre><code>python examples/get_balance.py</code></pre>
+      <p>If everything is configured correctly, you should see your account balance displayed.</p>
+    </div>
+
+    <div class="card">
+      <h3>Common Issues and Solutions</h3>
+      <h4>WebSocket Connection Error</h4>
+      <p>If you encounter a WebSocket connection error with <code>extra_headers</code>, fix it by:</p>
+      <pre><code>pip uninstall websockets
+pip install websockets==11.0</code></pre>
+      
+      <h4>Permission Denied Errors</h4>
+      <p>If you get permission errors when installing packages:</p>
+      <pre><code>termux-setup-storage</code></pre>
+      <p>Grant storage permissions when prompted.</p>
+
+      <h4>Memory Issues</h4>
+      <p>If installation fails due to memory constraints, try installing packages one at a time or close other apps to free up RAM.</p>
+    </div>
+
+    <div class="card">
+      <h3>Next Steps</h3>
+      <ul>
+        <li>Explore the <a href="examples.html">Examples</a> page for more script samples</li>
+        <li>Read the <a href="api.html">API Reference</a> to understand available methods</li>
+        <li>Check out the <a href="faq.html">FAQ</a> for common questions</li>
+      </ul>
+    </div>
+
+    <div class="advert">
+      Want a custom trading bot? <a href="https://shop.chipatrade.com/products/create-your-bot?variant=42924637487206" target="_blank">Let us build it for you!</a>
+    </div>
+  </main>
+</body>
+<script src="codeblock.js"></script>
+</html>

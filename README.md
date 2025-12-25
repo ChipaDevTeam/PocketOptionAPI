@@ -73,9 +73,39 @@ Example SSID format:
 
 If you are unable to find it, try running the automatic SSID scraper under the `tools` folder.
 
-## Comon errors
+## Common errors
 
-### Traceback:
+### Authentication timeout or connection immediately closes
+
+If you see errors like:
+```
+WARNING | pocketoptionapi_async.websocket_client:receive_messages:395 - WebSocket connection closed
+WARNING | pocketoptionapi_async.client:_start_regular_connection:245 - Failed to connect to region DEMO: Authentication timeout
+```
+
+**Solution**: Your SSID is likely in the wrong format or is expired. Make sure you are using the **complete SSID format**, not just the session ID:
+
+✅ **Correct format:**
+```python
+SSID = '42["auth",{"session":"n1p5ah5u8t9438rbunpgrq0hlq","isDemo":1,"uid":84402008,"platform":1}]'
+```
+
+❌ **Wrong format (just the session):**
+```python
+SSID = 'dxxxxxxxxxxxxxxxxxxxxxxxxxxxx'  # This won't work!
+```
+
+To get the correct SSID:
+1. Open PocketOption in your browser
+2. Open Developer Tools (F12)
+3. Go to Network tab
+4. Filter by "WS" (WebSocket)
+5. Look for a message that starts with `42["auth",`
+6. Copy the **entire message** including the `42["auth",{...}]` part
+
+### Websockets version error
+
+## Traceback:
 ```
 2025-07-13 15:25:16.531 | INFO     | pocketoptionapi_async.client:__init__:130 - Initialized PocketOption client (demo=True, uid=105754921, persistent=False) with enhanced monitoring
 2025-07-13 15:25:16.532 | INFO     | pocketoptionapi_async.client:connect:162 - Connecting to PocketOption...

@@ -78,14 +78,10 @@ class AsyncPocketOptionClient:
         if not enable_logging:
             logger.remove()
             logger.add(lambda msg: None, level="CRITICAL")  # Disable most logging
-        # Parse SSID if it's a complete auth message
+        
+        # Validate and parse SSID
         self._original_demo = None  # Store original demo value from SSID
-        if ssid.startswith('42["auth",'):
-            self._parse_complete_ssid(ssid)
-        else:
-            # Treat as raw session ID
-            self.session_id = ssid
-            self._complete_ssid = None
+        self._validate_and_parse_ssid(ssid)
 
         # Core components
         self._websocket = AsyncWebSocketClient()
@@ -656,6 +652,39 @@ class AsyncPocketOptionClient:
 
         return stats  # Private methods
 
+    def _validate_and_parse_ssid(self, ssid: str) -> None:
+        """Validate and parse SSID format"""
+        if not ssid or not isinstance(ssid, str):
+            raise InvalidParameterError(
+                "SSID must be a non-empty string. "
+                "Expected format: 42[\"auth\",{\"session\":\"...\",\"isDemo\":1,\"uid\":0,\"platform\":1}]"
+            )
+        
+        ssid = ssid.strip()
+        
+        # Check if it's a complete SSID format
+        if ssid.startswith('42["auth",'):
+            self._parse_complete_ssid(ssid)
+            # Validate that we got a session ID
+            if not self.session_id or len(self.session_id) < 10:
+                raise InvalidParameterError(
+                    f"Invalid SSID format - session ID is too short or missing. "
+                    f"Please ensure your SSID is in the correct format: "
+                    f"42[\"auth\",{{\"session\":\"your_session_id\",\"isDemo\":1,\"uid\":12345,\"platform\":1}}]. "
+                    f"You can get this from browser DevTools (F12) -> Network tab -> WS filter -> "
+                    f"look for authentication message starting with 42[\"auth\","
+                )
+        else:
+            # Treat as raw session ID
+            if len(ssid) < 10:
+                logger.warning(
+                    f"Raw session ID appears to be too short ({len(ssid)} chars). "
+                    f"If you're having connection issues, please use the complete SSID format: "
+                    f"42[\"auth\",{{\"session\":\"your_session\",\"isDemo\":1,\"uid\":12345,\"platform\":1}}]"
+                )
+            self.session_id = ssid
+            self._complete_ssid = None
+
     def _format_session_message(self) -> str:
         """Format session authentication message"""
         # Always create auth message from components using constructor parameters
@@ -683,6 +712,12 @@ class AsyncPocketOptionClient:
                 data = json.loads(json_part)
 
                 self.session_id = data.get("session", "")
+                if not self.session_id:
+                    raise InvalidParameterError(
+                        "SSID is missing the 'session' field. "
+                        "Expected format: 42[\"auth\",{\"session\":\"your_session\",\"isDemo\":1,\"uid\":12345,\"platform\":1}]"
+                    )
+                
                 # Store original demo value from SSID, but don't override the constructor parameter
                 self._original_demo = bool(data.get("isDemo", 1))
                 # Keep the is_demo value from constructor - don't override it
@@ -690,34 +725,67 @@ class AsyncPocketOptionClient:
                 self.platform = data.get("platform", 1)
                 # Don't store complete SSID - we'll reconstruct it with correct demo value
                 self._complete_ssid = None
+            else:
+                raise InvalidParameterError(
+                    "Could not parse SSID - JSON object not found. "
+                    "Expected format: 42[\"auth\",{\"session\":\"your_session\",\"isDemo\":1,\"uid\":12345,\"platform\":1}]"
+                )
+        except json.JSONDecodeError as e:
+            raise InvalidParameterError(
+                f"Invalid SSID format - JSON parsing failed: {e}. "
+                f"Expected format: 42[\"auth\",{{\"session\":\"your_session\",\"isDemo\":1,\"uid\":12345,\"platform\":1}}]"
+            )
+        except InvalidParameterError:
+            raise  # Re-raise our custom errors
         except Exception as e:
-            logger.warning(f"Failed to parse SSID: {e}")
-            self.session_id = ssid
-            self._complete_ssid = None
+            raise InvalidParameterError(
+                f"Failed to parse SSID: {e}. "
+                f"Expected format: 42[\"auth\",{{\"session\":\"your_session\",\"isDemo\":1,\"uid\":12345,\"platform\":1}}]"
+            )
 
     async def _wait_for_authentication(self, timeout: float = 10.0) -> None:
         """Wait for authentication to complete (like old API)"""
         auth_received = False
+        auth_error = None
 
         def on_auth(data):
             nonlocal auth_received
             auth_received = True
+        
+        def on_auth_error(data):
+            nonlocal auth_error
+            auth_error = data.get("message", "Unknown authentication error")
 
-        # Add temporary handler
+        # Add temporary handlers
         self._websocket.add_event_handler("authenticated", on_auth)
+        self._websocket.add_event_handler("auth_error", on_auth_error)
 
         try:
             # Wait for authentication
             start_time = time.time()
-            while not auth_received and (time.time() - start_time) < timeout:
+            while not auth_received and not auth_error and (time.time() - start_time) < timeout:
                 await asyncio.sleep(0.1)
 
+            if auth_error:
+                raise AuthenticationError(
+                    f"Authentication failed: {auth_error}. "
+                    f"Please verify your SSID is correct. "
+                    f"SSID should be in format: 42[\"auth\",{{\"session\":\"your_session\",\"isDemo\":1,\"uid\":12345,\"platform\":1}}]. "
+                    f"Get it from browser DevTools (F12) -> Network tab -> WS filter -> look for message starting with 42[\"auth\","
+                )
+            
             if not auth_received:
-                raise AuthenticationError("Authentication timeout")
+                raise AuthenticationError(
+                    "Authentication timeout - server did not respond to authentication request. "
+                    "This usually means your SSID is invalid or expired. "
+                    "Please get a fresh SSID from browser DevTools (F12) -> Network tab -> WS filter -> "
+                    "look for authentication message starting with 42[\"auth\",{\"session\":\"...\",..."
+                )
 
         finally:
-            # Remove temporary handler
+            # Remove temporary handlers
             self._websocket.remove_event_handler("authenticated", on_auth)
+            self._websocket.remove_event_handler("auth_error", on_auth_error)
 
     async def _initialize_data(self) -> None:
         """Initialize client data after connection"""

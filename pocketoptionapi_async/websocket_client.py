@@ -582,8 +582,11 @@ class AsyncWebSocketClient:
                 await self._handle_json_message(data)
 
             elif message.startswith("42") and "NotAuthorized" in message:
-                logger.error("Authentication failed: Invalid SSID")
-                await self._emit_event("auth_error", {"message": "Invalid SSID"})
+                logger.error(
+                    "Authentication failed: Server rejected SSID. "
+                    "Please verify your SSID is correct and not expired."
+                )
+                await self._emit_event("auth_error", {"message": "Invalid or expired SSID - Server returned NotAuthorized"})
 
         except Exception as e:
             logger.error(f"Error processing message: {e}")
@@ -611,8 +614,11 @@ class AsyncWebSocketClient:
     async def _handle_auth_message(self, message: str) -> None:
         """Handle authentication message"""
         if "NotAuthorized" in message:
-            logger.error("Authentication failed: Invalid SSID")
-            await self._emit_event("auth_error", {"message": "Invalid SSID"})
+            logger.error(
+                "Authentication failed: Server rejected SSID. "
+                "Please verify your SSID is correct and not expired."
+            )
+            await self._emit_event("auth_error", {"message": "Invalid or expired SSID - Server returned NotAuthorized"})
 
     async def _process_message_optimized(self, message) -> None:
         """

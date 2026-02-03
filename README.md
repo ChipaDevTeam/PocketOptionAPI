@@ -9,7 +9,7 @@ A comprehensive, modern async Python API for PocketOption trading platform with 
 
 ## IMPORTANT
 
-### This project is no longer actively development, please switch to [BinaryOptionsToolsV2](https://github.com/ChipaDevTeam/BinaryOptionsTools-v2)
+### This project is no longer actively developed, please switch to [BinaryOptionsToolsV2](https://github.com/ChipaDevTeam/BinaryOptionsTools-v2)
 
 ## Key Features
 

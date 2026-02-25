@@ -246,8 +246,7 @@ class AsyncWebSocketClient:
                     parsed_assets[asset_data["symbol"]] = asset_data
 
                 except Exception as e:
-                    if self.enable_logging:
-                        logger.warning(f"Failed to parse asset data: {asset}, error: {e}")
+                    logger.warning(f"Failed to parse asset data: {asset}, error: {e}")
                     # Skip broken entries safely
                     continue
 
@@ -269,8 +268,7 @@ class AsyncWebSocketClient:
             await self._emit_event("payout_update", finalData)
 
         except Exception as e:
-            if self.enable_logging:
-                logger.error(f"Payout message parsing error: {e}")
+            logger.error(f"Payout message parsing error: {e}")
 
     async def disconnect(self):
         """Gracefully disconnect from WebSocket"""

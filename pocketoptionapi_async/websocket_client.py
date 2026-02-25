@@ -211,85 +211,64 @@ class AsyncWebSocketClient:
 
         raise ConnectionError("Failed to connect to any WebSocket endpoint")
 
-    async def _handle_payout_message(self, message: str) -> None:
+    async def _handle_payout_message(self, json_message: str) -> None:
         """
-        Handles messages related to asset payout information.
-        These messages are typically in the format `[[5, [...]]]`.
-        The payout percentage is located at index 5 within the inner list.
+        Handles payout json message containing all available assets.
+        Converts raw array format into structured dictionaries.
+        """
 
-        Args:
-            message: The raw WebSocket message string containing payout data.
-        """
         try:
-            # The message starts with "[[5," and is a JSON string.
-            # We need to parse it as JSON.
-            # Example: [[5, ["5", "#AAPL", "Apple", "stock", 2, 50, ...]]]
-            # The structure is a list containing a list, where the first element
-            # of the inner list is '5' (indicating payout data), and the rest is the data.
+            # message is expected to already be parsed JSON (list of lists)
+            raw_assets = json_message
+            finalData = {
+                "assets": {},
+                "otc_assets": {},
+                "real_assets": {},
+                "tradable_assets": {},
+            }
+            parsed_assets = {}
 
-            # Remove the initial '[[5,' and the final ']]' and parse the remaining as JSON.
-            # A more robust way is to find the first '[' and last ']' of the actual JSON array.
+            for asset in raw_assets:
+                try:
+                    asset_data = {
+                        "id": asset[0],
+                        "symbol": asset[1],
+                        "name": asset[2],
+                        "type": asset[3],
+                        "payout": asset[5],
+                        "is_otc": bool(asset[9]),
+                        "linked_id": asset[10],
+                        "tradable": asset[14],
+                        "expirations": [x["time"] for x in asset[15]] if asset[15] else [],
+                    }
 
-            # Find the start of the actual JSON array data
-            json_start_index = message.find("[", message.find("[") + 1)
-            # Find the end of the actual JSON array data
-            json_end_index = message.rfind("]")
+                    # Use symbol as dictionary key
+                    parsed_assets[asset_data["symbol"]] = asset_data
 
-            if json_start_index == -1 or json_end_index == -1:
-                logger.warning(
-                    f"Could not find valid JSON array in payout message: {message[:100]}..."
-                )
-                return
+                except Exception:
+                    # Skip broken entries safely
+                    continue
 
-            # Extract the inner JSON string that represents the array of arrays
-            json_str = message[json_start_index : json_end_index + 1]
+            # Store everything
+            finalData.assets = parsed_assets
 
-            # Parse the extracted JSON string
-            data: List[List[Any]] = json.loads(json_str)
+            finalData.otc_assets = {
+                k: v for k, v in parsed_assets.items() if v["is_otc"]
+            }
 
-            # Iterate through each asset's payout information
-            for asset_data in data:
-                # Ensure the asset_data is a list and has enough elements
-                if isinstance(asset_data, list) and len(asset_data) > 5:
-                    try:
-                        # Extract relevant information
-                        asset_id = asset_data[0]
-                        asset_symbol = asset_data[1]
-                        asset_name = asset_data[2]
-                        asset_type = asset_data[3]
-                        payout_percentage = asset_data[5]  # Payout is at index 5
+            finalData.real_assets = {
+                k: v for k, v in parsed_assets.items() if not v["is_otc"]
+            }
 
-                        payout_info = {
-                            "id": asset_id,
-                            "symbol": asset_symbol,
-                            "name": asset_name,
-                            "type": asset_type,
-                            "payout": payout_percentage,
-                        }
-                        logger.debug(f"Parsed payout info: {payout_info}")
-                        # Emit an event with the parsed payout data
-                        await self._emit_event("payout_update", payout_info)
-                    except IndexError:
-                        logger.warning(
-                            f"Payout message element missing for asset_data: {asset_data}"
-                        )
-                    except Exception as e:
-                        logger.error(
-                            f"Error processing individual asset payout data {asset_data}: {e}"
-                        )
-                else:
-                    logger.warning(
-                        f"Unexpected format for asset payout data: {asset_data}"
-                    )
+            finalData.tradable_assets = {
+                k: v for k, v in parsed_assets.items() if v["tradable"]
+            }
 
-        except json.JSONDecodeError as e:
-            logger.error(
-                f"Failed to decode JSON from payout message '{message[:100]}...': {e}"
-            )
+            await self._emit_event("payout_update", finalData)
+
         except Exception as e:
-            logger.error(
-                f"Error in _handle_payout_message for message '{message[:100]}...': {e}"
-            )
+            if self.enable_logging:
+                logger.error(f"Payout message parsing error: {e}")
 
     async def disconnect(self):
         """Gracefully disconnect from WebSocket"""
@@ -531,6 +510,11 @@ class AsyncWebSocketClient:
                     json_data = json.loads(decoded_message)
                     logger.debug(f"Received JSON bytes message: {json_data}")
 
+                    if decoded_message.startswith("[[5,") and isinstance(json_data, list) and len(json_data) > 0 and isinstance(json_data[0], list) and len(json_data[0]) > 1:
+                        # Handle payout message (like old API)
+                        await self._handle_payout_message(json_data)
+                        return
+                    
                     # Handle balance data (like old API)
                     if "balance" in json_data:
                         balance_data = {
@@ -631,9 +615,9 @@ class AsyncWebSocketClient:
             # Convert bytes to string if needed
             if isinstance(message, bytes):
                 message = message.decode("utf-8")
+                
 
             logger.debug(f"Received message: {message}")
-
             # Check cache first
             message_hash = hash(message)
             cached_time = self._message_cache.get(f"{message_hash}_time")

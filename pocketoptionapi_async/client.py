@@ -37,7 +37,7 @@ class AsyncPocketOptionClient:
     """
     Professional async PocketOption API client with modern Python practices
     """
-
+    
     def __init__(
         self,
         ssid: str,
@@ -73,7 +73,7 @@ class AsyncPocketOptionClient:
         self.persistent_connection = persistent_connection
         self.auto_reconnect = auto_reconnect
         self.enable_logging = enable_logging
-
+        
         # Configure logging based on preference
         if not enable_logging:
             logger.remove()
@@ -93,6 +93,8 @@ class AsyncPocketOptionClient:
         self._candles_cache: Dict[str, List[Candle]] = {}
         self._server_time: Optional[ServerTime] = None
         self._event_callbacks: Dict[str, List[Callable]] = defaultdict(list)
+        self._payout_cache: Dict[str, float] = {}  # Cache for payout data
+        self._asset_info: Dict[str, Any] = {}  # Store asset information from payout messages
         # Setup event handlers for websocket messages
         self._setup_event_handlers()
 
@@ -130,6 +132,34 @@ class AsyncPocketOptionClient:
             else ""
         )
 
+    def _on_payout_update(self, data) -> None:
+        """Update payout cache with new data"""
+        logger.debug(f"Updating payout cache with data: {data}")
+        if isinstance(data, dict) and "assets" in data:
+            for asset, info in data["assets"].items():
+                payout = info.get("payout")
+
+                if payout != self._payout_cache.get(asset):
+                    self._payout_cache[asset] = payout
+                    logger.info(f"Updated payout cache for {asset}: {payout}")
+                
+                self._asset_info[asset] = info
+                
+
+    def _get_asset_full(self) -> Dict[str, Any]:
+        """Get full asset and payout information from cache"""
+        return {
+            "assets": self._asset_info,
+            "payouts": self._payout_cache,
+        }
+
+    def get_asset_info(self, asset: str) -> Optional[Dict[str, Any]]:
+        """Get detailed asset information from cache"""
+        return self._asset_info.get(asset)
+
+    def get_payout(self, asset: str) -> Optional[float]:
+        return self._payout_cache.get(asset)
+
     def _setup_event_handlers(self):
         """Setup WebSocket event handlers"""
         self._websocket.add_event_handler("authenticated", self._on_authenticated)
@@ -142,6 +172,7 @@ class AsyncPocketOptionClient:
         self._websocket.add_event_handler("stream_update", self._on_stream_update)
         self._websocket.add_event_handler("candles_received", self._on_candles_received)
         self._websocket.add_event_handler("disconnected", self._on_disconnected)
+        self._websocket.add_event_handler("payout_update", self._on_payout_update)
 
     async def connect(
         self, regions: Optional[List[str]] = None, persistent: Optional[bool] = None

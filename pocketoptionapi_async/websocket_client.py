@@ -252,17 +252,17 @@ class AsyncWebSocketClient:
                     continue
 
             # Store everything
-            finalData.assets = parsed_assets
+            finalData["assets"] = parsed_assets
 
-            finalData.otc_assets = {
+            finalData["otc_assets"] = {
                 k: v for k, v in parsed_assets.items() if v["is_otc"]
             }
 
-            finalData.real_assets = {
+            finalData["real_assets"] = {
                 k: v for k, v in parsed_assets.items() if not v["is_otc"]
             }
 
-            finalData.tradable_assets = {
+            finalData["tradable_assets"] = {
                 k: v for k, v in parsed_assets.items() if v["tradable"]
             }
 

@@ -512,7 +512,7 @@ class AsyncWebSocketClient:
                     json_data = json.loads(decoded_message)
                     logger.debug(f"Received JSON bytes message: {json_data}")
 
-                    if decoded_message.startswith("[[5,") and isinstance(json_data, list) and len(json_data) > 0 and isinstance(json_data[0], list) and len(json_data[0]) > 1:
+                    if isinstance(json_data, list) and json_data and isinstance(json_data[0], list) and len(json_data[0]) > 1 and json_data[0][0] == 5:
                         # Handle payout message (like old API)
                         await self._handle_payout_message(json_data)
                         return

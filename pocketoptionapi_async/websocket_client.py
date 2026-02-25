@@ -245,7 +245,9 @@ class AsyncWebSocketClient:
                     # Use symbol as dictionary key
                     parsed_assets[asset_data["symbol"]] = asset_data
 
-                except Exception:
+                except Exception as e:
+                    if self.enable_logging:
+                        logger.warning(f"Failed to parse asset data: {asset}, error: {e}")
                     # Skip broken entries safely
                     continue
 

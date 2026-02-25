@@ -132,7 +132,7 @@ class AsyncPocketOptionClient:
             else ""
         )
 
-    def _on_payout_update(self, data) -> None:
+    def _on_payout_update(self, data: Dict[str, Any]) -> None:
         """Update payout cache with new data"""
         logger.debug(f"Updating payout cache with data: {data}")
         if isinstance(data, dict) and "assets" in data:

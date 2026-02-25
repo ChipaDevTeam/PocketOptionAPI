@@ -211,7 +211,7 @@ class AsyncWebSocketClient:
 
         raise ConnectionError("Failed to connect to any WebSocket endpoint")
 
-    async def _handle_payout_message(self, json_message: str) -> None:
+    async def _handle_payout_message(self, json_message: List[List[Any]]) -> None:
         """
         Handles payout json message containing all available assets.
         Converts raw array format into structured dictionaries.

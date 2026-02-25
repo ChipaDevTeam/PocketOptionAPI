@@ -1,11 +1,15 @@
-# PocketOption API- By ChipaDevTeam - Modified by Six <3
-[join comunity](https://chipatrade.com/community)
+# PocketOption API- By ChipaDevTeam
+[Join community](https://chipatrade.com/community)
 ## Support us
 Join PocketOption with Six's affiliate link: [Six PocketOption Affiliate link](https://u3.shortink.io/main?utm_campaign=821725&utm_source=affiliate&utm_medium=sr&a=IqeAmBtFTrEWbh&ac=api&code=DLN960)
 <br>
 Join PocketOption with Chipas affiliate link: [Chipas PocketOption Affiliate link](https://u3.shortink.io/smart/SDIaxbeamcYYqB) 
 
 A comprehensive, modern async Python API for PocketOption trading platform with advanced features including persistent connections, monitoring, and extensive testing frameworks.
+
+## IMPORTANT
+
+### This project is no longer actively development, please switch to [BinaryOptionsToolsV2](https://github.com/ChipaDevTeam/BinaryOptionsTools-v2)
 
 ## Key Features
 

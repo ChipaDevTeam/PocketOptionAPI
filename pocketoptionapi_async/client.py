@@ -93,7 +93,7 @@ class AsyncPocketOptionClient:
         self._candles_cache: Dict[str, List[Candle]] = {}
         self._server_time: Optional[ServerTime] = None
         self._event_callbacks: Dict[str, List[Callable]] = defaultdict(list)
-        self._payout_cache: Dict[str, float] = {}  # Cache for payout data
+        self._payout_cache: Dict[str, Optional(float)] = {}  # Cache for payout data
         self._asset_info: Dict[str, Any] = {}  # Store asset information from payout messages
         # Setup event handlers for websocket messages
         self._setup_event_handlers()

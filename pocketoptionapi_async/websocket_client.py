@@ -3,6 +3,7 @@ Async WebSocket client for PocketOption API
 """
 
 import asyncio
+from email import message
 import json
 import ssl
 import time
@@ -253,17 +254,11 @@ class AsyncWebSocketClient:
             # Store everything
             finalData["assets"] = parsed_assets
 
-            finalData["otc_assets"] = {
-                k: v for k, v in parsed_assets.items() if v["is_otc"]
-            }
+            finalData["otc_assets"] = {k: v for k, v in parsed_assets.items() if v["is_otc"]}
 
-            finalData["real_assets"] = {
-                k: v for k, v in parsed_assets.items() if not v["is_otc"]
-            }
+            finalData["real_assets"] = {k: v for k, v in parsed_assets.items() if not v["is_otc"]}
 
-            finalData["tradable_assets"] = {
-                k: v for k, v in parsed_assets.items() if v["tradable"]
-            }
+            finalData["tradable_assets"] = {k: v for k, v in parsed_assets.items() if v["tradable"]}
 
             await self._emit_event("payout_update", finalData)
 
@@ -349,9 +344,7 @@ class AsyncWebSocketClient:
             except Exception as e:
                 logger.error(f"Failed to send message: {e}")
                 if self.connection_info:
-                    await self._connection_pool.update_stats(
-                        self.connection_info.url, 0, False
-                    )
+                    await self._connection_pool.update_stats(self.connection_info.url, 0, False)
                 raise WebSocketError(f"Failed to send message: {e}")
 
     async def receive_messages(self) -> None:
@@ -412,9 +405,7 @@ class AsyncWebSocketClient:
             logger.debug("Waiting for initial handshake message...")
             if not self.websocket:
                 raise WebSocketError("WebSocket is not connected during handshake")
-            initial_message = await asyncio.wait_for(
-                self.websocket.recv(), timeout=10.0
-            )
+            initial_message = await asyncio.wait_for(self.websocket.recv(), timeout=10.0)
             logger.debug(f"Received initial: {initial_message}")
 
             # Ensure initial_message is a string
@@ -430,9 +421,7 @@ class AsyncWebSocketClient:
                 logger.debug("Sent '40' response")
 
                 # Wait for connection establishment message with "40" and "sid"
-                conn_message = await asyncio.wait_for(
-                    self.websocket.recv(), timeout=10.0
-                )
+                conn_message = await asyncio.wait_for(self.websocket.recv(), timeout=10.0)
                 logger.debug(f"Received connection: {conn_message}")
 
                 # Ensure conn_message is a string
@@ -447,9 +436,7 @@ class AsyncWebSocketClient:
                     await self.send_message(ssid)
                     logger.debug("Sent SSID authentication")
                 else:
-                    logger.warning(
-                        f"Unexpected connection message format: {conn_message}"
-                    )
+                    logger.warning(f"Unexpected connection message format: {conn_message}")
             else:
                 logger.warning(f"Unexpected initial message format: {initial_message}")
 
@@ -510,11 +497,17 @@ class AsyncWebSocketClient:
                     json_data = json.loads(decoded_message)
                     logger.debug(f"Received JSON bytes message: {json_data}")
 
-                    if isinstance(json_data, list) and json_data and isinstance(json_data[0], list) and len(json_data[0]) > 1 and json_data[0][0] == 5:
+                    if (
+                        isinstance(json_data, list)
+                        and json_data
+                        and isinstance(json_data[0], list)
+                        and len(json_data[0]) > 1
+                        and json_data[0][0] == 5
+                    ):
                         # Handle payout message (like old API)
                         await self._handle_payout_message(json_data)
                         return
-                    
+
                     # Handle balance data (like old API)
                     if "balance" in json_data:
                         balance_data = {
@@ -570,7 +563,10 @@ class AsyncWebSocketClient:
                     "Authentication failed: Server rejected SSID. "
                     "Please verify your SSID is correct and not expired."
                 )
-                await self._emit_event("auth_error", {"message": "Invalid or expired SSID - Server returned NotAuthorized"})
+                await self._emit_event(
+                    "auth_error",
+                    {"message": "Invalid or expired SSID - Server returned NotAuthorized"},
+                )
 
         except Exception as e:
             logger.error(f"Error processing message: {e}")
@@ -602,7 +598,9 @@ class AsyncWebSocketClient:
                 "Authentication failed: Server rejected SSID. "
                 "Please verify your SSID is correct and not expired."
             )
-            await self._emit_event("auth_error", {"message": "Invalid or expired SSID - Server returned NotAuthorized"})
+            await self._emit_event(
+                "auth_error", {"message": "Invalid or expired SSID - Server returned NotAuthorized"}
+            )
 
     async def _process_message_optimized(self, message) -> None:
         """
@@ -615,7 +613,6 @@ class AsyncWebSocketClient:
             # Convert bytes to string if needed
             if isinstance(message, bytes):
                 message = message.decode("utf-8")
-                
 
             logger.debug(f"Received message: {message}")
             # Check cache first
@@ -632,6 +629,15 @@ class AsyncWebSocketClient:
             # Fast message routing
             for prefix, handler in self._message_handlers.items():
                 if message.startswith(prefix):
+                    # if message is a payout message, it needs to be parsed as JSON first before handling
+                    if message.startswith("[[5,"):
+                        try:
+                            message = json.loads(message)
+
+                        except Exception as e:
+                            logger.error(f"Payout message parsing error: {e}")
+                            return
+
                     await handler(message)
                     break
             else:
@@ -684,9 +690,7 @@ class AsyncWebSocketClient:
             await self._emit_event("history_update", event_data)
 
         else:
-            await self._emit_event(
-                "unknown_event", {"type": event_type, "data": event_data}
-            )
+            await self._emit_event("unknown_event", {"type": event_type, "data": event_data})
 
     async def _emit_event(self, event: str, data: Dict[str, Any]) -> None:
         """

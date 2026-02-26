@@ -78,7 +78,7 @@ class AsyncPocketOptionClient:
         if not enable_logging:
             logger.remove()
             logger.add(lambda msg: None, level="CRITICAL")  # Disable most logging
-        
+
         # Validate and parse SSID
         self._original_demo = None  # Store original demo value from SSID
         self._validate_and_parse_ssid(ssid)
@@ -89,10 +89,14 @@ class AsyncPocketOptionClient:
         self._orders: Dict[str, OrderResult] = {}
         self._active_orders: Dict[str, OrderResult] = {}
         self._order_results: Dict[str, OrderResult] = {}
-        self._server_id_to_request_id: Dict[str, str] = {}  # Maps server deal IDs to client request IDs
+        self._server_id_to_request_id: Dict[str, str] = (
+            {}
+        )  # Maps server deal IDs to client request IDs
         self._candles_cache: Dict[str, List[Candle]] = {}
         self._server_time: Optional[ServerTime] = None
         self._event_callbacks: Dict[str, List[Callable]] = defaultdict(list)
+        self._payout_cache: Dict[str, Optional[float]] = {}  # Cache for payout data
+        self._asset_info: Dict[str, Any] = {}  # Store asset information from payout messages
         # Setup event handlers for websocket messages
         self._setup_event_handlers()
 
@@ -130,6 +134,34 @@ class AsyncPocketOptionClient:
             else ""
         )
 
+    def _on_payout_update(self, data: Dict[str, Any]) -> None:
+        """Update payout cache with new data"""
+        logger.debug(f"Updating payout cache with data: {data}")
+        if isinstance(data, dict) and "assets" in data:
+            for asset, info in data["assets"].items():
+                payout = info.get("payout")
+
+                if payout != self._payout_cache.get(asset):
+                    self._payout_cache[asset] = payout
+                    logger.info(f"Updated payout cache for {asset}: {payout}")
+
+                self._asset_info[asset] = info
+
+    def _get_asset_full(self) -> Dict[str, Any]:
+        """Get full asset and payout information from cache"""
+        return {
+            "assets": self._asset_info,
+            "payouts": self._payout_cache,
+        }
+
+    def get_asset_info(self, asset: str) -> Optional[Dict[str, Any]]:
+        """Get detailed asset information from cache"""
+        return self._asset_info.get(asset)
+
+    def get_payout(self, asset: str) -> Optional[float]:
+        """Get cached payout rate for the given asset symbol, or None if unavailable."""
+        return self._payout_cache.get(asset)
+
     def _setup_event_handlers(self):
         """Setup WebSocket event handlers"""
         self._websocket.add_event_handler("authenticated", self._on_authenticated)
@@ -142,6 +174,7 @@ class AsyncPocketOptionClient:
         self._websocket.add_event_handler("stream_update", self._on_stream_update)
         self._websocket.add_event_handler("candles_received", self._on_candles_received)
         self._websocket.add_event_handler("disconnected", self._on_disconnected)
+        self._websocket.add_event_handler("payout_update", self._on_payout_update)
 
     async def connect(
         self, regions: Optional[List[str]] = None, persistent: Optional[bool] = None
@@ -177,9 +210,7 @@ class AsyncPocketOptionClient:
             )
             return False
 
-    async def _start_regular_connection(
-        self, regions: Optional[List[str]] = None
-    ) -> bool:
+    async def _start_regular_connection(self, regions: Optional[List[str]] = None) -> bool:
         """Start regular connection (existing behavior)"""
         logger.info("Starting regular connection...")
         # Use appropriate regions based on demo mode
@@ -196,11 +227,7 @@ class AsyncPocketOptionClient:
             else:
                 # For live mode, use all regions except demo
                 all_regions = REGIONS.get_all_regions()
-                regions = [
-                    name
-                    for name, url in all_regions.items()
-                    if "DEMO" not in name.upper()
-                ]
+                regions = [name for name, url in all_regions.items() if "DEMO" not in name.upper()]
                 logger.info(f"Live mode: Using non-demo regions: {regions}")
         # Update connection stats
         self._connection_stats["total_connections"] += 1
@@ -241,9 +268,7 @@ class AsyncPocketOptionClient:
 
         return False
 
-    async def _start_persistent_connection(
-        self, regions: Optional[List[str]] = None
-    ) -> bool:
+    async def _start_persistent_connection(self, regions: Optional[List[str]] = None) -> bool:
         """Start persistent connection with keep-alive (like old API)"""
         logger.info("Starting persistent connection with automatic keep-alive...")
 
@@ -255,36 +280,19 @@ class AsyncPocketOptionClient:
         self._keep_alive_manager = ConnectionKeepAlive(complete_ssid, self.is_demo)
 
         # Add event handlers
-        self._keep_alive_manager.add_event_handler(
-            "connected", self._on_keep_alive_connected
-        )
-        self._keep_alive_manager.add_event_handler(
-            "reconnected", self._on_keep_alive_reconnected
-        )
-        self._keep_alive_manager.add_event_handler(
-            "message_received", self._on_keep_alive_message
-        )
+        self._keep_alive_manager.add_event_handler("connected", self._on_keep_alive_connected)
+        self._keep_alive_manager.add_event_handler("reconnected", self._on_keep_alive_reconnected)
+        self._keep_alive_manager.add_event_handler("message_received", self._on_keep_alive_message)
 
         # Add handlers for forwarded WebSocket events
-        self._keep_alive_manager.add_event_handler(
-            "balance_data", self._on_balance_data
-        )
-        self._keep_alive_manager.add_event_handler(
-            "balance_updated", self._on_balance_updated
-        )
-        self._keep_alive_manager.add_event_handler(
-            "authenticated", self._on_authenticated
-        )
-        self._keep_alive_manager.add_event_handler(
-            "order_opened", self._on_order_opened
-        )
-        self._keep_alive_manager.add_event_handler(
-            "order_closed", self._on_order_closed
-        )
-        self._keep_alive_manager.add_event_handler(
-            "stream_update", self._on_stream_update
-        )
+        self._keep_alive_manager.add_event_handler("balance_data", self._on_balance_data)
+        self._keep_alive_manager.add_event_handler("balance_updated", self._on_balance_updated)
+        self._keep_alive_manager.add_event_handler("authenticated", self._on_authenticated)
+        self._keep_alive_manager.add_event_handler("order_opened", self._on_order_opened)
+        self._keep_alive_manager.add_event_handler("order_closed", self._on_order_closed)
+        self._keep_alive_manager.add_event_handler("stream_update", self._on_stream_update)
         self._keep_alive_manager.add_event_handler("json_data", self._on_json_data)
+        self._keep_alive_manager.add_event_handler("payout_update", self._on_payout_update)
 
         # Connect with keep-alive
         success = await self._keep_alive_manager.connect_with_keep_alive(regions)
@@ -373,10 +381,7 @@ class AsyncPocketOptionClient:
             raise ConnectionError("Not connected to PocketOption")
 
         # Request balance update if needed
-        if (
-            not self._balance
-            or (datetime.now() - self._balance.last_updated).seconds > 60
-        ):
+        if not self._balance or (datetime.now() - self._balance.last_updated).seconds > 60:
             await self._request_balance_update()
 
             # Wait a bit for balance to be received
@@ -452,14 +457,10 @@ class AsyncPocketOptionClient:
         # Check connection and attempt reconnection if needed
         if not self.is_connected:
             if self.auto_reconnect:
-                logger.info(
-                    f"Connection lost, attempting reconnection for {asset} candles..."
-                )
+                logger.info(f"Connection lost, attempting reconnection for {asset} candles...")
                 reconnected = await self._attempt_reconnection()
                 if not reconnected:
-                    raise ConnectionError(
-                        "Not connected to PocketOption and reconnection failed"
-                    )
+                    raise ConnectionError("Not connected to PocketOption and reconnection failed")
             else:
                 raise ConnectionError("Not connected to PocketOption")
 
@@ -481,9 +482,7 @@ class AsyncPocketOptionClient:
         for attempt in range(max_retries):
             try:
                 # Request candle data
-                candles = await self._request_candles(
-                    asset, timeframe_seconds, count, end_time
-                )
+                candles = await self._request_candles(asset, timeframe_seconds, count, end_time)
 
                 # Cache results
                 cache_key = f"{asset}_{timeframe_seconds}"
@@ -500,9 +499,7 @@ class AsyncPocketOptionClient:
                     if self.auto_reconnect:
                         reconnected = await self._attempt_reconnection()
                         if reconnected:
-                            logger.info(
-                                f" Reconnected, retrying candle request for {asset}"
-                            )
+                            logger.info(f" Reconnected, retrying candle request for {asset}")
                             continue
 
                 logger.error(f"Failed to get candles for {asset}: {e}")
@@ -657,11 +654,11 @@ class AsyncPocketOptionClient:
         if not ssid or not isinstance(ssid, str):
             raise InvalidParameterError(
                 "SSID must be a non-empty string. "
-                "Expected format: 42[\"auth\",{\"session\":\"...\",\"isDemo\":1,\"uid\":0,\"platform\":1}]"
+                'Expected format: 42["auth",{"session":"...","isDemo":1,"uid":0,"platform":1}]'
             )
-        
+
         ssid = ssid.strip()
-        
+
         # Check if it's a complete SSID format
         if ssid.startswith('42["auth",'):
             self._parse_complete_ssid(ssid)
@@ -670,9 +667,9 @@ class AsyncPocketOptionClient:
                 raise InvalidParameterError(
                     f"Invalid SSID format - session ID is too short or missing. "
                     f"Please ensure your SSID is in the correct format: "
-                    f"42[\"auth\",{{\"session\":\"your_session_id\",\"isDemo\":1,\"uid\":12345,\"platform\":1}}]. "
+                    f'42["auth",{{"session":"your_session_id","isDemo":1,"uid":12345,"platform":1}}]. '
                     f"You can get this from browser DevTools (F12) -> Network tab -> WS filter -> "
-                    f"look for authentication message starting with 42[\"auth\","
+                    f'look for authentication message starting with 42["auth",'
                 )
         else:
             # Treat as raw session ID
@@ -680,7 +677,7 @@ class AsyncPocketOptionClient:
                 logger.warning(
                     f"Raw session ID appears to be too short ({len(ssid)} chars). "
                     f"If you're having connection issues, please use the complete SSID format: "
-                    f"42[\"auth\",{{\"session\":\"your_session\",\"isDemo\":1,\"uid\":12345,\"platform\":1}}]"
+                    f'42["auth",{{"session":"your_session","isDemo":1,"uid":12345,"platform":1}}]'
                 )
             self.session_id = ssid
             self._complete_ssid = None
@@ -715,9 +712,9 @@ class AsyncPocketOptionClient:
                 if not self.session_id:
                     raise InvalidParameterError(
                         "SSID is missing the 'session' field. "
-                        "Expected format: 42[\"auth\",{\"session\":\"your_session\",\"isDemo\":1,\"uid\":12345,\"platform\":1}]"
+                        'Expected format: 42["auth",{"session":"your_session","isDemo":1,"uid":12345,"platform":1}]'
                     )
-                
+
                 # Store original demo value from SSID, but don't override the constructor parameter
                 self._original_demo = bool(data.get("isDemo", 1))
                 # Keep the is_demo value from constructor - don't override it
@@ -728,19 +725,19 @@ class AsyncPocketOptionClient:
             else:
                 raise InvalidParameterError(
                     "Could not parse SSID - JSON object not found. "
-                    "Expected format: 42[\"auth\",{\"session\":\"your_session\",\"isDemo\":1,\"uid\":12345,\"platform\":1}]"
+                    'Expected format: 42["auth",{"session":"your_session","isDemo":1,"uid":12345,"platform":1}]'
                 )
         except json.JSONDecodeError as e:
             raise InvalidParameterError(
                 f"Invalid SSID format - JSON parsing failed: {e}. "
-                f"Expected format: 42[\"auth\",{{\"session\":\"your_session\",\"isDemo\":1,\"uid\":12345,\"platform\":1}}]"
+                f'Expected format: 42["auth",{{"session":"your_session","isDemo":1,"uid":12345,"platform":1}}]'
             )
         except InvalidParameterError:
             raise  # Re-raise our custom errors
         except Exception as e:
             raise InvalidParameterError(
                 f"Failed to parse SSID: {e}. "
-                f"Expected format: 42[\"auth\",{{\"session\":\"your_session\",\"isDemo\":1,\"uid\":12345,\"platform\":1}}]"
+                f'Expected format: 42["auth",{{"session":"your_session","isDemo":1,"uid":12345,"platform":1}}]'
             )
 
     async def _wait_for_authentication(self, timeout: float = 10.0) -> None:
@@ -751,7 +748,7 @@ class AsyncPocketOptionClient:
         def on_auth(data):
             nonlocal auth_received
             auth_received = True
-        
+
         def on_auth_error(data):
             nonlocal auth_error
             auth_error = data.get("message", "Unknown authentication error")
@@ -770,16 +767,16 @@ class AsyncPocketOptionClient:
                 raise AuthenticationError(
                     f"Authentication failed: {auth_error}. "
                     f"Please verify your SSID is correct. "
-                    f"SSID should be in format: 42[\"auth\",{{\"session\":\"your_session\",\"isDemo\":1,\"uid\":12345,\"platform\":1}}]. "
-                    f"Get it from browser DevTools (F12) -> Network tab -> WS filter -> look for message starting with 42[\"auth\","
+                    f'SSID should be in format: 42["auth",{{"session":"your_session","isDemo":1,"uid":12345,"platform":1}}]. '
+                    f'Get it from browser DevTools (F12) -> Network tab -> WS filter -> look for message starting with 42["auth",'
                 )
-            
+
             if not auth_received:
                 raise AuthenticationError(
                     "Authentication timeout - server did not respond to authentication request. "
                     "This usually means your SSID is invalid or expired. "
                     "Please get a fresh SSID from browser DevTools (F12) -> Network tab -> WS filter -> "
-                    "look for authentication message starting with 42[\"auth\",{\"session\":\"...\",..."
+                    'look for authentication message starting with 42["auth",{"session":"...",...'
                 )
 
         finally:
@@ -821,18 +818,12 @@ class AsyncPocketOptionClient:
         if asset not in ASSETS:
             raise InvalidParameterError(f"Invalid asset: {asset}")
 
-        if (
-            amount < API_LIMITS["min_order_amount"]
-            or amount > API_LIMITS["max_order_amount"]
-        ):
+        if amount < API_LIMITS["min_order_amount"] or amount > API_LIMITS["max_order_amount"]:
             raise InvalidParameterError(
                 f"Amount must be between {API_LIMITS['min_order_amount']} and {API_LIMITS['max_order_amount']}"
             )
 
-        if (
-            duration < API_LIMITS["min_duration"]
-            or duration > API_LIMITS["max_duration"]
-        ):
+        if duration < API_LIMITS["min_duration"] or duration > API_LIMITS["max_duration"]:
             raise InvalidParameterError(
                 f"Duration must be between {API_LIMITS['min_duration']} and {API_LIMITS['max_duration']} seconds"
             )
@@ -879,16 +870,12 @@ class AsyncPocketOptionClient:
         # Check one more time before creating fallback
         if request_id in self._active_orders:
             if self.enable_logging:
-                logger.success(
-                    f" Order {request_id} found in active tracking (final check)"
-                )
+                logger.success(f" Order {request_id} found in active tracking (final check)")
             return self._active_orders[request_id]
 
         if request_id in self._order_results:
             if self.enable_logging:
-                logger.info(
-                    f"📋 Order {request_id} found in completed results (final check)"
-                )
+                logger.info(f"📋 Order {request_id} found in completed results (final check)")
             return self._order_results[request_id]
 
         # If timeout, create a fallback result with the original order data
@@ -928,9 +915,7 @@ class AsyncPocketOptionClient:
         start_time = time.time()
 
         if self.enable_logging:
-            logger.info(
-                f"🔍 Starting check_win for order {order_id}, max wait: {max_wait_time}s"
-            )
+            logger.info(f"🔍 Starting check_win for order {order_id}, max wait: {max_wait_time}s")
 
         while time.time() - start_time < max_wait_time:
             # Check if order is in completed results
@@ -942,11 +927,11 @@ class AsyncPocketOptionClient:
                     )
 
                 return {
-                    "result": "win"
-                    if result.status == OrderStatus.WIN
-                    else "loss"
-                    if result.status == OrderStatus.LOSE
-                    else "draw",
+                    "result": (
+                        "win"
+                        if result.status == OrderStatus.WIN
+                        else "loss" if result.status == OrderStatus.LOSE else "draw"
+                    ),
                     "profit": result.profit if result.profit is not None else 0,
                     "order_id": order_id,
                     "completed": True,
@@ -956,9 +941,7 @@ class AsyncPocketOptionClient:
             # Check if order is still active (not expired yet)
             if order_id in self._active_orders:
                 active_order = self._active_orders[order_id]
-                time_remaining = (
-                    active_order.expires_at - datetime.now()
-                ).total_seconds()
+                time_remaining = (active_order.expires_at - datetime.now()).total_seconds()
 
                 if time_remaining <= 0:
                     if self.enable_logging:
@@ -977,9 +960,7 @@ class AsyncPocketOptionClient:
 
         # Timeout reached
         if self.enable_logging:
-            logger.warning(
-                f"⏰ check_win timeout for order {order_id} after {max_wait_time}s"
-            )
+            logger.warning(f"⏰ check_win timeout for order {order_id} after {max_wait_time}s")
 
         return {
             "result": "timeout",
@@ -988,9 +969,7 @@ class AsyncPocketOptionClient:
             "timeout": True,
         }
 
-    async def _request_candles(
-        self, asset: str, timeframe: int, count: int, end_time: datetime
-    ):
+    async def _request_candles(self, asset: str, timeframe: int, count: int, end_time: datetime):
         """Request candle data from server using the correct changeSymbol format"""
 
         # Create message data in the format expected by PocketOption for real-time candles
@@ -1049,9 +1028,7 @@ class AsyncPocketOptionClient:
                             high=float(candle_data[3]),
                             low=float(candle_data[4]),
                             close=float(candle_data[2]),
-                            volume=float(candle_data[5])
-                            if len(candle_data) > 5
-                            else 0.0,
+                            volume=float(candle_data[5]) if len(candle_data) > 5 else 0.0,
                             asset=asset,
                             timeframe=timeframe,
                         )
@@ -1080,9 +1057,7 @@ class AsyncPocketOptionClient:
                         request_id in self._candle_requests
                         and not self._candle_requests[request_id].done()
                     ):
-                        candles = self._parse_candles_data(
-                            data["candles"], asset, period
-                        )
+                        candles = self._parse_candles_data(data["candles"], asset, period)
                         self._candle_requests[request_id].set_result(candles)
                         if self.enable_logging:
                             logger.success(
@@ -1105,22 +1080,18 @@ class AsyncPocketOptionClient:
                         logger.debug(f"Mapped server ID {server_id} to request ID {request_id}")
 
             # If this is a new order, add it to tracking
-            if (
-                request_id not in self._active_orders
-                and request_id not in self._order_results
-            ):
+            if request_id not in self._active_orders and request_id not in self._order_results:
                 order_result = OrderResult(
                     order_id=request_id,
                     asset=data.get("asset", "UNKNOWN"),
                     amount=float(data.get("amount", 0)),
-                    direction=OrderDirection.CALL
-                    if data.get("command", 0) == 0
-                    else OrderDirection.PUT,
+                    direction=(
+                        OrderDirection.CALL if data.get("command", 0) == 0 else OrderDirection.PUT
+                    ),
                     duration=int(data.get("time", 60)),
                     status=OrderStatus.ACTIVE,
                     placed_at=datetime.now(),
-                    expires_at=datetime.now()
-                    + timedelta(seconds=int(data.get("time", 60))),
+                    expires_at=datetime.now() + timedelta(seconds=int(data.get("time", 60))),
                     profit=float(data.get("profit", 0)) if "profit" in data else None,
                     payout=data.get("payout"),
                 )
@@ -1128,9 +1099,7 @@ class AsyncPocketOptionClient:
                 # Add to active orders
                 self._active_orders[request_id] = order_result
                 if self.enable_logging:
-                    logger.success(
-                        f" Order {request_id} added to tracking from JSON data"
-                    )
+                    logger.success(f" Order {request_id} added to tracking from JSON data")
 
                 await self._emit_event("order_opened", data)
 
@@ -1139,14 +1108,14 @@ class AsyncPocketOptionClient:
             for deal in data["deals"]:
                 if isinstance(deal, dict) and "id" in deal:
                     server_deal_id = str(deal["id"])
-                    
+
                     # Try to find the request_id for this server deal ID
                     request_id = self._server_id_to_request_id.get(server_deal_id)
-                    
+
                     # If we have a mapping, use request_id to find the order
                     # Otherwise, fall back to trying server_deal_id directly
                     lookup_id = request_id or server_deal_id
-                    
+
                     if lookup_id in self._active_orders:
                         active_order = self._active_orders[lookup_id]
                         profit = float(deal.get("profit", 0))
@@ -1175,7 +1144,7 @@ class AsyncPocketOptionClient:
                         # Move from active to completed - use the original order_id (request_id)
                         self._order_results[active_order.order_id] = result
                         del self._active_orders[lookup_id]
-                        
+
                         # Clean up the server ID mapping
                         if request_id and server_deal_id in self._server_id_to_request_id:
                             del self._server_id_to_request_id[server_deal_id]
@@ -1246,11 +1215,7 @@ class AsyncPocketOptionClient:
             logger.debug(f"📡 Stream update: {data}")
 
         # Check if this is candle data from changeSymbol subscription
-        if (
-            "asset" in data
-            and "period" in data
-            and ("candles" in data or "data" in data)
-        ):
+        if "asset" in data and "period" in data and ("candles" in data or "data" in data):
             await self._handle_candles_stream(data)
 
         await self._emit_event("stream_update", data)
@@ -1272,9 +1237,7 @@ class AsyncPocketOptionClient:
                                 data.get("candles", []), asset, timeframe
                             )
                             if self.enable_logging:
-                                logger.info(
-                                    f"🕯️ Parsed {len(candles)} candles from response"
-                                )
+                                logger.info(f"🕯️ Parsed {len(candles)} candles from response")
                             future.set_result(candles)
                             if self.enable_logging:
                                 logger.debug(f"Resolved candle request: {request_id}")
@@ -1304,10 +1267,7 @@ class AsyncPocketOptionClient:
             request_id = f"{asset}_{period}"
             if self.enable_logging:
                 logger.info(f"🕯️ Processing candle stream for {asset} ({period}s)")
-            if (
-                hasattr(self, "_candle_requests")
-                and request_id in self._candle_requests
-            ):
+            if hasattr(self, "_candle_requests") and request_id in self._candle_requests:
                 future = self._candle_requests[request_id]
                 if not future.done():
                     candles = self._parse_stream_candles(data, asset, period)
@@ -1322,9 +1282,7 @@ class AsyncPocketOptionClient:
             if self.enable_logging:
                 logger.error(f"Error handling candles stream: {e}")
 
-    def _parse_stream_candles(
-        self, stream_data: Dict[str, Any], asset: str, timeframe: int
-    ):
+    def _parse_stream_candles(self, stream_data: Dict[str, Any], asset: str, timeframe: int):
         """Parse candles from stream update data (changeSymbol response)"""
         candles = []
         try:
@@ -1478,9 +1436,7 @@ class AsyncPocketOptionClient:
                     logger.warning(f"Reconnection attempt {attempt + 1} failed")
 
             except Exception as e:
-                logger.error(
-                    f"Reconnection attempt {attempt + 1} failed with error: {e}"
-                )
+                logger.error(f"Reconnection attempt {attempt + 1} failed with error: {e}")
 
         logger.error(f"All {max_attempts} reconnection attempts failed")
         return False

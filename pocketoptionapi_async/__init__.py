@@ -40,7 +40,7 @@ from .monitoring import (
 # Create REGIONS instance
 REGIONS = Regions()
 
-__version__ = "2.0.0"
+__version__ = "2.0.1"
 __author__ = "PocketOptionAPI Team"
 
 __all__ = [

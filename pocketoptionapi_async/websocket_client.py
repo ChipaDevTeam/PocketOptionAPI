@@ -10,9 +10,10 @@ import time
 from typing import Optional, Callable, Dict, Any, List, Deque
 from datetime import datetime
 from collections import deque
-import websockets
+
+import websockets.legacy.client
 from websockets.exceptions import ConnectionClosed
-from websockets.legacy.client import WebSocketClientProtocol
+
 from loguru import logger
 
 from .models import ConnectionInfo, ConnectionStatus, ServerTime
@@ -63,7 +64,7 @@ class ConnectionPool:
     """Connection pool for better resource management"""
 
     def __init__(self, max_connections: int = 3):
-        self.active_connections: Dict[str, WebSocketClientProtocol] = {}
+        self.active_connections: Dict[str, websockets.legacy.client.WebSocketClientProtocol] = {}
         self.connection_stats: Dict[str, Dict[str, Any]] = {}
         self._pool_lock = asyncio.Lock()
 
@@ -120,7 +121,7 @@ class AsyncWebSocketClient:
     """
 
     def __init__(self):
-        self.websocket: Optional[WebSocketClientProtocol] = None
+        self.websocket: Optional[websockets.legacy.client.WebSocketClientProtocol] = None
         self.connection_info: Optional[ConnectionInfo] = None
         self.server_time: Optional[ServerTime] = None
         self._ping_task: Optional[asyncio.Task] = None
@@ -169,7 +170,7 @@ class AsyncWebSocketClient:
 
                 # Connect with timeout
                 ws = await asyncio.wait_for(
-                    websockets.connect(
+                    websockets.legacy.client.connect(
                         url,
                         ssl=ssl_context,
                         extra_headers=DEFAULT_HEADERS,

@@ -1,5 +1,5 @@
-import websockets
 import anyio
+import websockets.legacy.client
 from rich.pretty import pprint as print
 from pocketoptionapi_async.constants import REGIONS
 
@@ -12,7 +12,7 @@ async def websocket_client(url, pro):
     for i in region_urls:
         print(f"Trying {i}...")
         try:
-            async with websockets.connect(
+            async with websockets.legacy.client.connect(
                 i,
                 extra_headers={
                     "Origin": "https://pocketoption.com/"  # main URL

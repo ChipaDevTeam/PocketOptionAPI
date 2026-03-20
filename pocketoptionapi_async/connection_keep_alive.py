@@ -6,8 +6,9 @@ import asyncio
 from typing import Optional, List, Callable, Dict, Any
 from datetime import datetime, timedelta
 from loguru import logger
+
+import websockets.legacy.client
 from websockets.exceptions import ConnectionClosed
-from websockets.legacy.client import connect, WebSocketClientProtocol
 
 from models import ConnectionInfo, ConnectionStatus
 from constants import REGIONS
@@ -23,7 +24,7 @@ class ConnectionKeepAlive:
         self.is_demo = is_demo
 
         # Connection state
-        self.websocket: Optional[WebSocketClientProtocol] = None
+        self.websocket: Optional[websockets.legacy.client.WebSocketClientProtocol] = None
         self.connection_info: Optional[ConnectionInfo] = None
         self.is_connected = False
         self.should_reconnect = True
@@ -138,7 +139,7 @@ class ConnectionKeepAlive:
 
                 # Connect with headers (like old API)
                 self.websocket = await asyncio.wait_for(
-                    connect(
+                    websockets.legacy.client.connect(
                         url,
                         ssl=ssl_context,
                         extra_headers={

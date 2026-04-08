@@ -90,6 +90,40 @@ h2, h3 {
   margin-left: 0.5rem;
 }
 
+.links-bar {
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+  margin: 1.5rem 0 0 0;
+  flex-wrap: wrap;
+}
+
+.link-btn {
+  display: inline-block;
+  padding: 0.8rem 1.5rem;
+  border-radius: 0.7rem;
+  font-weight: 700;
+  font-size: 1.05rem;
+  text-decoration: none;
+  transition: transform 0.2s, box-shadow 0.2s;
+  letter-spacing: 0.5px;
+}
+
+.link-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(124,58,237,0.3);
+}
+
+.signup-btn {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: #fff;
+}
+
+.discord-btn {
+  background: linear-gradient(135deg, #5865F2, #4752C4);
+  color: #fff;
+}
+
 
 
 pre {
